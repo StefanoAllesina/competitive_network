@@ -1,0 +1,66 @@
+# Example for identical physiological rates
+
+In the supplement, we deal with a model in which all species have different death rates ($d_i$) and fecundities ($f_i$) for all species. 
+
+```{r, warning=FALSE, message=FALSE}
+# load the code
+source("code_different_rates.R")
+# set a random seed (optional, included here for reproducibility)
+set.seed(10)
+```
+
+Take the rock-paper-scissors game, and slightly alter the physiological rates:
+
+```{r}
+H <- matrix(c(1/2, 1, 0, 
+              0, 1/2, 1,
+              1, 0, 1/2), 3, 3, byrow = TRUE)
+d <- c(1.1, 1.2, 1)
+f <- c(0.9, 1.1, 1.2)
+```
+
+Then, set random initial conditions, and integrate the model in which we sample two seedlings at a time:
+
+```{r}
+x0 <- runif(3)
+x0 <- x0 / sum(x0) # Sum_i x_i = 1
+out_2 <- run_dynamics_physrates(state = x0, # initial conditions
+                      maxtime = 500, # integration time
+                      stepout = 0.1, # step for output
+                      model = "sample2_full", # sample 2, full model
+                      H = H, # matrix containing probability of winning
+                      d = d,
+                      f = f
+                      )
+show(plot_dynamics(out_2))
+```
+
+The graph shows that the equilibrium is unstable, and the species cycle away from it, eventually leading to monodominance. Sampling three seedlings at the time, on the other hand, leads to stable coexistence:
+
+```{r}
+out_3 <- run_dynamics_physrates(state = x0, # initial conditions
+                      maxtime = 100, # integration time
+                      stepout = 0.1, # step for output
+                      model = "sample3_full", # sample 2, full model
+                      H = H, # matrix containing probability of winning
+                      d = d,
+                      f = f
+                      )
+show(plot_dynamics(out_3))
+```
+
+This result is robust to changning initial conditions:
+
+```{r}
+x0 <- runif(3)
+x0 <- x0 / sum(x0) # Sum_i x_i = 1
+out_3_2 <- run_dynamics_physrates(state = x0, # initial conditions
+                      maxtime = 100, # integration time
+                      stepout = 0.1, # step for output
+                      model = "sample3_full", # sample 2, full model
+                      H = H, # matrix containing probability of winning
+                      d = d,
+                      f = f
+                      )
+show(plot_dynamics(out_3_2))
+```

@@ -1,0 +1,113 @@
+# Example for identical physiological rates
+
+In the main text, we deal with a model in which $d_i = f_i = 1$ for all species. This document shows how Equations 1-4 can be integrated numerically, and how to find the equilibrium using linear programming.
+
+```{r, warning=FALSE, message=FALSE}
+# load the code
+source("code_identical_rates.R")
+# set a random seed (optional, included here for reproducibility)
+set.seed(10)
+```
+
+First, we build a random competitive network with 5 species
+
+```{r}
+H <- random_H(5)
+print(H)
+```
+
+Then, we set random initial conditions, and integrate Eq 1:
+
+```{r}
+x0 <- runif(5)
+x0 <- x0 / sum(x0) # Sum_i x_i = 1
+out_eq1 <- run_dynamics(state = x0, # initial conditions
+                        maxtime = 300, # integration time
+                        stepout = 0.1, # step for output
+                        model = "eq1", # choose equation 1
+                        H = H # matrix containing probability of winning
+                        )
+```
+
+Plotting the time-series
+
+```{r}
+show(plot_dynamics(out_eq1))
+```
+
+we see that two species went extinct, and that the remaining three are cycling. This happens irrespective of initial conditions:
+
+```{r}
+x0 <- runif(5)
+x0 <- x0 / sum(x0) # Sum_i x_i = 1
+out_eq1_2 <- run_dynamics(state = x0, # initial conditions
+                        maxtime = 300, # integration time
+                        stepout = 0.1, # step for output
+                        model = "eq1", # choose equation 1
+                        H = H # matrix containing probability of winning
+                        )
+show(plot_dynamics(out_eq1_2))
+```
+
+When we integrate the system in Eq 2, we find exactly the same outcome, as the systems of equations are equivalent:
+```{r}
+out_eq2 <- run_dynamics(state = x0, # initial conditions
+                        maxtime = 300, # integration time
+                        stepout = 0.1, # step for output
+                        model = "eq2", # equation 2: replicator equation
+                        H = H # matrix containing probability of winning
+                        )
+show(plot_dynamics(out_eq2))
+```
+
+However, when we take three seedlings at a time, or integrate the 3-player replicator equation, dynamics converge:
+```{r}
+out_eq3 <- run_dynamics(state = x0, # initial conditions
+                        maxtime = 300, # integration time
+                        stepout = 0.1, # step for output
+                        model = "eq3", # equation 3: sample 3 seedlings at a time
+                        H = H # matrix containing probability of winning
+                        )
+show(plot_dynamics(out_eq3))
+out_eq4 <- run_dynamics(state = x0, # initial conditions
+                        maxtime = 300, # integration time
+                        stepout = 0.1, # step for output
+                        model = "eq4", # equation 4: three-player replicator equation
+                        H = H # matrix containing probability of winning
+                        )
+show(plot_dynamics(out_eq4))
+```
+
+## The equilibrium can be found using linear programming
+
+The dynamics converge to an equilibrium, that is approximately:
+```{r}
+round(out_eq4$equil_approx, 4)
+```
+
+The exact solution can be found using linear programming:
+```{r}
+round(out_eq4$equil_lp, 4)
+```
+
+## Starting from species-abundance distribution
+We can build a matrix $H$ such that a given species abundance distribution is an equilibrium for the system of equations. 
+
+```{r}
+target_xstar <- c(0.3, 0.25, 0.2, 0.15, 0.1)
+set.seed(3)
+H <- build_H_given_xstar(target_xstar)
+
+# Now integrate dynamics
+x0 <- runif(5)
+x0 <- x0 / sum(x0)
+out_givenx <- run_dynamics(state = x0, # initial conditions
+                        maxtime = 750, # integration time
+                        stepout = 0.5, # step for output
+                        model = "eq4", # equation 4: three-player replicator equation
+                        H = H # matrix containing probability of winning
+                        )
+show(plot_dynamics(out_givenx))
+```
+
+
